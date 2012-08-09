@@ -46,6 +46,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.kernel.GraphDatabaseAPI;
+import org.neo4j.server.rest.web.CollectUserAgentFilter;
 // import org.neo4j.kernel.ha.HaSettings;
 
 /**
@@ -210,6 +211,56 @@ public class UdcExtensionImplTest
         destroy( graphdb );
     }
 
+    @Test
+    public void shouldBeAbleToDetermineUserAgent() throws Exception
+    {
+        CollectUserAgentFilter.addUserAgent( "test/1.0" );
+        setupServer();
+        GraphDatabaseService graphdb = createTempDatabase( config );
+        assertGotSuccessWithRetry( IS_GREATER_THAN_ZERO );
+        assertEquals( "test/1.0", handler.getQueryMap().get( USER_AGENTS ) );
+
+
+        destroy( graphdb );
+    }
+    @Test
+    public void shouldBeAbleToDetermineUserAgents() throws Exception
+    {
+        CollectUserAgentFilter.addUserAgent("test/1.0");
+        CollectUserAgentFilter.addUserAgent("foo/bar");
+        setupServer();
+        GraphDatabaseService graphdb = createTempDatabase( config );
+        assertGotSuccessWithRetry( IS_GREATER_THAN_ZERO );
+        String userAgents = handler.getQueryMap().get( USER_AGENTS );
+        assertEquals( true, userAgents.contains( "test/1.0" ) );
+        assertEquals( true, userAgents.contains( "foo/bar" ));
+
+
+        destroy( graphdb );
+    }
+
+    @Test
+    public void shouldUpdateTheUserAgentsPerPing() throws Exception
+    {
+        CollectUserAgentFilter.addUserAgent("test/1.0");
+        setupServer();
+        config.put(GraphDatabaseSettings.interval.name(), "1000");
+        GraphDatabaseService graphdb = createTempDatabase( config );
+        assertGotSuccessWithRetry( IS_GREATER_THAN_ZERO );
+        String userAgents = handler.getQueryMap().get( USER_AGENTS );
+        assertEquals( true, userAgents.contains( "test/1.0" ) );
+
+        CollectUserAgentFilter.addUserAgent("foo/bar");
+
+        Thread.sleep( 1000 );
+        assertGotSuccessWithRetry( IS_GREATER_THAN_ZERO );
+
+        userAgents = handler.getQueryMap().get( USER_AGENTS );
+        assertEquals( true, userAgents.contains( "foo/bar" ));
+
+        destroy( graphdb );
+    }
+
     /*
     @Test
     public void shouldBeAbleToDetermineClusterFromSettings() throws Exception
@@ -272,7 +323,7 @@ public class UdcExtensionImplTest
         GraphDatabaseService graphdb = createTempDatabase( config );
         assertGotSuccessWithRetry( IS_GREATER_THAN_ZERO );
 
-        assertEquals(UdcInformationCollector.searchForPackageSystems(),handler.getQueryMap().get("dist"));
+        assertEquals( DefaultUdcInformationCollector.searchForPackageSystems(),handler.getQueryMap().get("dist"));
 
         destroy( graphdb );
     }
