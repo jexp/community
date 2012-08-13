@@ -25,7 +25,9 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.neo4j.server.configuration.Configurator;
+import org.neo4j.server.database.CypherExecutor;
 import org.neo4j.server.database.Database;
+import org.neo4j.server.database.InjectableProvider;
 import org.neo4j.server.plugins.Injectable;
 import org.neo4j.server.plugins.PluginManager;
 
@@ -45,8 +47,6 @@ public interface NeoServer
 
     PluginManager getExtensionManager();
 
-    @Deprecated
-    Collection<Injectable<?>> getInjectables( List<String> packageNames );
-
     URI baseUri();
+
 }

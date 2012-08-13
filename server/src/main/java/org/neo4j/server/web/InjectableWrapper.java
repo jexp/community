@@ -17,33 +17,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.server.modules;
+package org.neo4j.server.web;
 
-import org.neo4j.kernel.impl.util.StringLogger;
-import org.neo4j.server.statistic.StatisticCollector;
-import org.neo4j.server.statistic.StatisticFilter;
-import org.neo4j.server.web.WebServer;
+import javax.ws.rs.ext.Provider;
 
-public class StatisticModule implements ServerModule
+import com.sun.jersey.api.core.HttpContext;
+import org.neo4j.server.database.InjectableProvider;
+import org.neo4j.server.plugins.Injectable;
+
+@Provider
+public class InjectableWrapper extends InjectableProvider<Object>
 {
-    private final StatisticFilter filter;
-	private final WebServer webServer;
-    
-    public StatisticModule(WebServer webServer, StatisticCollector requestStatistics)
+    private final Injectable injectable;
+
+    public InjectableWrapper( Injectable injectable )
     {
-    	this.webServer = webServer;
-    	this.filter = new StatisticFilter( requestStatistics );
+        super( injectable.getType() );
+        this.injectable = injectable;
     }
 
     @Override
-	public void start(StringLogger logger)
+    public Object getValue( HttpContext c )
     {
-        webServer.addFilter(filter, "/*");
-    }
-
-    @Override
-	public void stop()
-    {
-    	webServer.removeFilter(filter, "/*");
+        return injectable.getValue();
     }
 }
